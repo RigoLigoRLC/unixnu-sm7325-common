@@ -1,0 +1,116 @@
+diff --git a/pexpert/pexpert/arm64/BCM2837.h b/pexpert/pexpert/arm64/BCM2837.h
+--- a/pexpert/pexpert/arm64/BCM2837.h
++++ b/pexpert/pexpert/arm64/BCM2837.h
+@@ -6,7 +6,8 @@
+ #define _PEXPERT_ARM_BCM2837_H
+ 
+ #define NO_MONITOR 1
+-#define NO_ECORE 1
++/* SM7325 uses Edge scheduling with architectural ARM CPU control. */
++#define __ARM_AMP__ 1
+ 
+ #define BCM2837
+ #define BCM2837_BRINGUP
+diff --git a/pexpert/pexpert/arm64/board_config.h b/pexpert/pexpert/arm64/board_config.h
+--- a/pexpert/pexpert/arm64/board_config.h
++++ b/pexpert/pexpert/arm64/board_config.h
+@@ -137,3 +137,3 @@
+ #define MAX_CPUS                       8 /* sheng: SM8550 has eight cores */
+-#define MAX_CPU_CLUSTERS               1
++#define MAX_CPU_CLUSTERS               3
+ 
+diff --git a/osfmk/arm64/machine_routines.c b/osfmk/arm64/machine_routines.c
+--- a/osfmk/arm64/machine_routines.c
++++ b/osfmk/arm64/machine_routines.c
+@@ -1094,3 +1094,6 @@
+-#if HAS_CLUSTER
++#if defined(BCM2837)
++		/* SM7325 AFF1 identifies individual CPUs, not scheduling clusters. */
++		uint32_t phys_cluster_id = (uint32_t)ml_readprop(child, "die-cluster-id", ML_READPROP_MANDATORY);
++#elif HAS_CLUSTER
+ 		uint32_t phys_cluster_id = MPIDR_CLUSTER_ID(cpu->phys_id);
+ #else
+diff --git a/osfmk/kern/sched_clutch.c b/osfmk/kern/sched_clutch.c
+--- a/osfmk/kern/sched_clutch.c
++++ b/osfmk/kern/sched_clutch.c
+@@ -1136,6 +1136,23 @@
+ 	os_atomic_store(&clutch_bucket_group->scbg_timeshare_tick, 0, relaxed);
+ 	os_atomic_store(&clutch_bucket_group->scbg_pri_shift, INT8_MAX, relaxed);
+-	os_atomic_store(&clutch_bucket_group->scbg_preferred_cluster, pset0.pset_cluster_id, relaxed);
++	uint32_t preferred_cluster = pset0.pset_cluster_id;
++#if defined(BCM2837) && CONFIG_SCHED_EDGE
++	/* Foreground/fixed work prefers prime; other interactive work uses P. */
++	const ml_topology_info_t *topology = ml_get_topology_info();
++	cluster_type_t preferred_type = bucket >= TH_BUCKET_SHARE_UT ? CLUSTER_TYPE_E : CLUSTER_TYPE_P;
++	unsigned int preferred_die_cluster = bucket <= TH_BUCKET_SHARE_FG ? 2 : 1;
++	bool found_type = false;
++	for (unsigned int i = 0; i < topology->num_clusters; i++) {
++		if (topology->clusters[i].cluster_type == preferred_type) {
++			if (!found_type || topology->cpus[topology->clusters[i].first_cpu_id].die_cluster_id == preferred_die_cluster) {
++				preferred_cluster = topology->clusters[i].cluster_id;
++				found_type = true;
++			}
++		}
++	}
++	/* A cpus=1/2/4 boot has only E cores and retains its boot cluster. */
++#endif
++	os_atomic_store(&clutch_bucket_group->scbg_preferred_cluster, preferred_cluster, relaxed);
+ 	/*
+ 	 * All thread groups should be initialized to be interactive; this allows the newly launched
+ 	 * thread groups to fairly compete with already running thread groups.
+@@ -1208,5 +1225,13 @@
+ sched_edge_clutch_bucket_group_preferred_cluster(sched_clutch_bucket_group_t clutch_bucket_group)
+ {
+-	return os_atomic_load(&clutch_bucket_group->scbg_preferred_cluster, relaxed);
++	uint32_t cluster_id = os_atomic_load(&clutch_bucket_group->scbg_preferred_cluster, relaxed);
++#if defined(BCM2837)
++	/* Early kernel threads run before ArmCpu registers the secondary psets. */
++	if (!sched_edge_pset_available(pset_array[cluster_id])) {
++		return pset0.pset_cluster_id;
++	}
++	/* The stored preference takes effect once its CPUs become schedulable. */
++#endif
++	return cluster_id;
+ }
+ 
+@@ -4863,5 +4888,12 @@
+ 				/* P->P/E->E edge config */
+ 				bitmap_clear(src_pset->foreign_psets, dst_cluster_id);
+ 				bitmap_set(src_pset->native_psets, dst_cluster_id);
+-				sched_edge_config_set(src_cluster_id, dst_cluster_id, (sched_clutch_edge){.sce_migration_weight = 0, .sce_migration_allowed = 1, .sce_steal_allowed = 1});
++				uint32_t migration_weight = 0;
++#if defined(BCM2837)
++				/* Busy prime requires a larger latency gain; idle prime stays usable. */
++				if (ml_get_die_cluster_id(src_cluster_id) == 1 && ml_get_die_cluster_id(dst_cluster_id) == 2) {
++					migration_weight = 16;
++				}
++#endif
++				sched_edge_config_set(src_cluster_id, dst_cluster_id, (sched_clutch_edge){.sce_migration_weight = migration_weight, .sce_migration_allowed = 1, .sce_steal_allowed = 1});
+ 			} else if ((src_pset->pset_type == CLUSTER_TYPE_P) && (dst_pset->pset_type == CLUSTER_TYPE_E)) {
+@@ -4978,5 +5010,10 @@
+ 		 * do not spill/rebalance for RT threads.
+ 		 */
+-		return (options & QOS_PARALLELISM_CLUSTER_SHARED_RESOURCE) ? pcluster_count : pcpu_count;
++#if defined(BCM2837)
++		if (pcpu_count == 0) {
++			return (options & QOS_PARALLELISM_CLUSTER_SHARED_RESOURCE) ? ecluster_count : ecpu_count;
++		}
++#endif
++		return (options & QOS_PARALLELISM_CLUSTER_SHARED_RESOURCE) ? pcluster_count : pcpu_count;
+ 	}
+ 
+diff --git a/osfmk/kern/processor.c b/osfmk/kern/processor.c
+--- a/osfmk/kern/processor.c
++++ b/osfmk/kern/processor.c
+@@ -368,4 +368,11 @@
+ pset_type_for_id(uint32_t cluster_id)
+ {
++#if defined(BCM2837)
++	/* Topology exists before secondary psets are registered by ArmCpu. */
++	const ml_topology_info_t *topology = ml_get_topology_info();
++	assert(cluster_id < topology->num_clusters);
++	return topology->clusters[cluster_id].cluster_type;
++#else
+ 	return pset_array[cluster_id]->pset_type;
++#endif
+ }

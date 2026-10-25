@@ -1,0 +1,134 @@
+schema_version = 1
+
+[[component]]
+id = "ArmCpu"
+kind = "driver"
+function = "SM7325 GICv3, architectural timer and eight-core CPU startup"
+scope = "soc"
+repository = "https://github.com/RigoLigoRLC/unixnu-armcpu.git"
+revision = "55e18efdbbb50c3b8bde5edfd95e8e2df8a765b4"
+path = "drivers/ArmCpu"
+hardware = ["SM7325", "ARM GICv3", "ARM generic timer"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["CPU affinities and cluster properties in DTS", "UEFI PSCI services"]
+verified_devices = ["gts7fewifi"]
+dependencies = []
+source_files = ["ArmCpu.cpp"]
+runtime_identifiers = ["org.blu-sharky.ArmCpu", "ArmCpu"]
+build_stage = "kernel"
+build = ["build-arm-driver.py", "ArmCpu"]
+outputs = ["build/armcpu/libArmCpu.a"]
+
+[[component]]
+id = "NativeUfs"
+kind = "driver"
+function = "SM7325 UFS queues, SMMU mappings and device storage windows"
+scope = "soc"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeufs.git"
+revision = "c6dd2bf97046b47ab4f03bc508c7bec4e5960c14"
+path = "drivers/NativeUfs"
+hardware = ["SM7325 UFS controller", "Qualcomm SMMU v2"]
+os_abi = ["ipados-17.7.11-21H461", "IOStorageFamily"]
+board_dependencies = ["native-ufs-smmu-reg", "native-ufs-stream-id", "native-ufs-interrupt", "userdata windows", "Apple storage bindings"]
+verified_devices = ["gts7fewifi"]
+dependencies = []
+source_files = ["NativeUfs.cpp"]
+runtime_identifiers = ["NativeUfs", "org.blu-sharky.NativeUfs"]
+build_stage = "embedded"
+build = []
+outputs = ["build/native-ufs/libNativeUfs.a", "build/native-ufs/bindings.json"]
+
+[[component]]
+id = "NativeQcomTsens"
+kind = "driver"
+function = "Qualcomm TSENS v2 temperature conversion and validity sampling"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeqcomtsens.git"
+revision = "8b2fb5e610eaed8fb7c0dc368da9e379adc0e12f"
+path = "drivers/NativeQcomTsens"
+hardware = ["SM7325 TSENS v2"]
+os_abi = []
+board_dependencies = ["Sensor register callbacks and CPU thermal policy"]
+verified_devices = ["gts7fewifi"]
+dependencies = []
+source_files = ["NativeQcomTsens.cpp", "NativeQcomTsens.h"]
+runtime_identifiers = ["NativeQcomTsens"]
+build_stage = "embedded"
+build = []
+outputs = ["build/t733-cpu-power/libT733CpuPower.a"]
+
+[[component]]
+id = "NativeQcomSpmi"
+kind = "driver"
+function = "Qualcomm PMIC arbiter v5 SPMI operations and PDC interrupt routing"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeqcomspmi.git"
+revision = "ce3ccf0d2369048ec01372183c8e34dcc519c35f"
+path = "drivers/NativeQcomSpmi"
+hardware = ["SM7325 PMIC arbiter v5", "PDC"]
+os_abi = []
+board_dependencies = ["PMIC resource mapping and interrupt ownership"]
+verified_devices = ["gts7fewifi"]
+dependencies = []
+source_files = ["NativeQcomSpmi.cpp", "NativeQcomSpmi.h"]
+runtime_identifiers = ["NativeQcomSpmi"]
+build_stage = "embedded"
+build = []
+outputs = ["build/t733-pmic-keys/libT733PmicKeys.a"]
+
+[[component]]
+id = "NativeGeniSpi"
+kind = "driver"
+function = "Qualcomm GENI SPI FIFO operations and transfer recovery"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativegenispi.git"
+revision = "d57a1715273080095e8ba77b2ea515849823c8a8"
+path = "drivers/NativeGeniSpi"
+hardware = ["Qualcomm GENI SPI"]
+os_abi = []
+board_dependencies = ["MMIO, clock and GPIO callbacks"]
+verified_devices = ["gts7fewifi"]
+dependencies = []
+source_files = ["GeniSpi.c", "GeniSpi.h"]
+runtime_identifiers = ["NativeGeniSpi"]
+build_stage = "embedded"
+build = []
+outputs = ["build/t733-touch-input/libT733Touch.a"]
+
+[[component]]
+id = "NativeGeniI2c"
+kind = "driver"
+function = "Qualcomm GENI I2C FIFO and open-drain transfers"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativegenii2c.git"
+revision = "c9185a7a469cd0297608633e30ab875e9a7c5e03"
+path = "drivers/NativeGeniI2c"
+hardware = ["Qualcomm GENI I2C"]
+os_abi = []
+board_dependencies = ["MMIO, clock and GPIO callbacks"]
+verified_devices = ["gts7fewifi"]
+dependencies = []
+source_files = ["NativeGeniI2c.cpp", "NativeGeniI2c.h"]
+runtime_identifiers = ["NativeGeniI2c"]
+build_stage = "embedded"
+build = []
+outputs = ["build/t733-display-power/libT733DisplayPower.a"]
+
+[[component]]
+id = "NativeQcomDsi"
+kind = "driver"
+function = "Qualcomm DSI command FIFO and video-mode command scheduling"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeqcomdsi.git"
+revision = "d486690195683e169343ee316af0f45842a2107a"
+path = "drivers/NativeQcomDsi"
+hardware = ["SM7325 DSI controller"]
+os_abi = []
+board_dependencies = ["Inherited video timing and board panel power policy"]
+verified_devices = ["gts7fewifi"]
+dependencies = []
+source_files = ["QcomDsi.c", "QcomDsi.h"]
+runtime_identifiers = ["NativeQcomDsi"]
+build_stage = "embedded"
+build = []
+outputs = ["build/t733-display-power/libT733DisplayPower.a"]

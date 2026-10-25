@@ -1,0 +1,20 @@
+schema_version = 2
+
+[soc]
+name = "SM7325"
+description = "Qualcomm SM7325 (Yupik), ARM64 with three CPU frequency domains"
+hardware_repository = "https://github.com/Bush-cat/android_kernel_samsung_sm7325.git"
+hardware_revision = "36b842cf1fc87a989dcc8158a142d7575cee41c1"
+hardware_paths = [
+  "arch/arm64/boot/dts/vendor/qcom/yupik.dtsi",
+  "arch/arm64/boot/dts/vendor/qcom/yupik-thermal.dtsi",
+  "drivers/clk/qcom/gcc-yupik.c",
+  "drivers/pinctrl/qcom/pinctrl-yupik.c",
+]
+
+[components]
+include = ["ArmDTPlatform", "ArmCpu", "NativeUfs"]
+
+[kernel]
+config_fragments = ["arch:configs/common.config", "soc:configs/sm7325.config"]
+patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series"]

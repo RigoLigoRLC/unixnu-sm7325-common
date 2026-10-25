@@ -125,5 +125,44 @@
             native-ufs-interrupt = <297>;
             unixnu,adt-name = "ufshc";
         };
+
+        gpu: gpu@3d00000 {
+            compatible = "qcom,adreno-635.0", "qcom,adreno";
+            reg = <0 0x03d00000 0 0x40000>;
+            reg-names = "gpu";
+            interrupts = <0 300 4>, <0 304 4>, <0 305 4>;
+            interrupt-names = "gpu", "hfi", "gmu";
+            native-adreno-platform-reg =
+                <0 0x03d6a000 0 0x34000>,
+                <0 0x03da0000 0 0x20000>,
+                <0 0x03d90000 0 0x10000>,
+                <0 0x00100000 0 0x1f0000>,
+                <0 0x0b290000 0 0x10000>,
+                <0 0x03de0000 0 0x10000>,
+                <0 0x80860000 0 0x20000>,
+                <0 0x18220000 0 0x10000>,
+                <0 0x0c300000 0 0x400>,
+                <0 0x00408000 0 0x1000>,
+                <0 0x03d9e000 0 0x1000>,
+                <0 0x8b71a000 0 0x2000>;
+            native-adreno-reg-names = "gmu", "smmu", "gpucc", "gcc",
+                "pdc", "rscc", "command-db", "rpmh", "aop", "ipcc", "cx-misc", "zap";
+            native-adreno-chip-id = <0x06030500>;
+            native-adreno-gmem-bytes = <0x80000>;
+            native-adreno-frequency-hz = <315000000>;
+            native-adreno-highest-bank-bit = <14>;
+            native-adreno-gpu-bank = <0>;
+            native-adreno-gpu-asid = <1>;
+            native-adreno-gpu-slot = <0>;
+            native-adreno-gpu-sid = <0>;
+            native-adreno-gpu-sid-mask = <0x400>;
+            native-adreno-gmu-bank = <1>;
+            native-adreno-gmu-asid = <2>;
+            native-adreno-gmu-slot = <5>;
+            native-adreno-gmu-sid = <5>;
+            native-adreno-gmu-sid-mask = <0x400>;
+            unixnu,adt-name = "adreno";
+            status = "disabled";
+        };
     };
 };

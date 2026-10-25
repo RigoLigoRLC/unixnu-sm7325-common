@@ -1,6 +1,25 @@
 schema_version = 1
 
 [[component]]
+id = "Adreno6xx"
+kind = "driver"
+function = "A642L GMU power, SMMU memory and command processor submission"
+scope = "gpu"
+repository = "https://github.com/RigoLigoRLC/unixnu-adreno6xx.git"
+revision = "5dc5f2e0e035fac39f78f9d784ce32b348e73a90"
+path = "drivers/Adreno6xx"
+hardware = ["Adreno 642L", "SM7325"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["A660 GMU, SQE and ZAP firmware", "GPU power resources", "GPU and GMU stream ownership"]
+verified_devices = []
+dependencies = ["ArmSmmu4K", "AdrenoPM4", "AdrenoFirmware"]
+source_files = ["NativeAdrenoService.cpp", "NativeAdrenoA6xxGmu.cpp", "NativeAdrenoA6xxPower.cpp"]
+runtime_identifiers = ["NativeAdrenoGpuPublished", "AGXDeviceUserClient"]
+build_stage = "embedded"
+build = []
+outputs = ["build/adreno6xx/libAdreno6xx.a"]
+
+[[component]]
 id = "ArmCpu"
 kind = "driver"
 function = "SM7325 GICv3, architectural timer and eight-core CPU startup"

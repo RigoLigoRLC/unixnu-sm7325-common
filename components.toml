@@ -1,12 +1,31 @@
 schema_version = 1
 
 [[component]]
+id = "AdrenoMetal"
+kind = "driver"
+function = "Metal frontend using metal2vulkan and A642L Turnip"
+scope = "gpu"
+repository = "https://github.com/UniXNU/AdrenoMetal.git"
+revision = "4f9598cbb6d6bff4d469931d43ee89797fd1b753"
+path = "drivers/AdrenoMetal"
+hardware = ["Adreno 642L", "SM7325"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["Original IOGPUFamily ABI", "Turnip Darwin backend", "Metal plugin boot addon"]
+verified_devices = []
+dependencies = ["Adreno6xx", "AdrenoPM4"]
+source_files = ["NativeAdrenoMetalPlugin.mm", "NativeBridgeMetalFrontend.mm", "OriginalAcceleratorABI.h"]
+runtime_identifiers = ["NativeAdrenoMetalDevice"]
+build_stage = "embedded"
+build = []
+outputs = ["build/adreno-metal-plugin/NativeAdrenoMetal.bundle"]
+
+[[component]]
 id = "Adreno6xx"
 kind = "driver"
 function = "A642L GMU power, SMMU memory and command processor submission"
 scope = "gpu"
 repository = "https://github.com/RigoLigoRLC/unixnu-adreno6xx.git"
-revision = "ecb2b586acfc515699207c0c8cf1832509894a94"
+revision = "dda9eb85841cbb027b8828adc5bd25191ed2c10c"
 path = "drivers/Adreno6xx"
 hardware = ["Adreno 642L", "SM7325"]
 os_abi = ["ipados-17.7.11-21H461"]
@@ -25,7 +44,7 @@ kind = "driver"
 function = "SM7325 GICv3, architectural timer and eight-core CPU startup"
 scope = "soc"
 repository = "https://github.com/RigoLigoRLC/unixnu-armcpu.git"
-revision = "36e1e6f62fbbfd634b596c9cb8843a8ebe355782"
+revision = "55cc0617ea9203e85f1cbbf81ae2669f4fa41645"
 path = "drivers/ArmCpu"
 hardware = ["SM7325", "ARM GICv3", "ARM generic timer"]
 os_abi = ["ipados-17.7.11-21H461"]

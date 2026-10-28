@@ -126,6 +126,14 @@
             unixnu,adt-name = "ufshc";
         };
 
+        mdss: display-controller@ae00000 {
+            compatible = "qcom,sm7325-mdss";
+            reg = <0 0x0ae00000 0 0x84000>;
+            interrupts = <0 83 4>;
+            unixnu,adt-name = "mdss";
+            status = "disabled";
+        };
+
         gpu: gpu@3d00000 {
             compatible = "qcom,adreno-635.0", "qcom,adreno";
             reg = <0 0x03d00000 0 0x40000>;
